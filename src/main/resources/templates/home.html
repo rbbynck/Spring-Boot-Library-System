@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Add CSRF meta tags for JavaScript to access -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <script src="/js/user-script.js" defer></script>
+    <title>Spring Library</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .library-name {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .header .icons img {
+            width: 30px;
+            height: 30px;
+            margin-left: 15px;
+            cursor: pointer;
+        }
+
+        .divider {
+            height: 2px;
+            background-color: #34495e;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 62px); /* Adjust for header height */
+        }
+
+        .sidebar {
+            width: 15%;
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .sidebar ul li:hover,
+        .sidebar ul li.active {
+            background-color: #2980b9;
+        }
+
+        .content {
+            width: 85%;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .announcement {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .profile-container {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .profile-row strong {
+            color: #2c3e50;
+        }
+
+        .profile-row span {
+            text-align: right;
+            flex: 1;
+            padding-left: 10px;
+        }
+
+
+
+
+    </style>
+</head>
+<body>
+<!-- Header -->
+<div class="header">
+    <div class="library-name">Spring Library</div>
+    <div class="icons">
+        <form th:action="@{/spring-library/logout}" method="post" style="display: inline;">
+            <!-- CSRF Token -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer;">
+                <img src="/images/logout.png" alt="Logout" title="Logout"
+                     style="width: 30px; height: 30px; margin-left: 15px;">
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Divider -->
+<div class="divider"></div>
+
+<!-- Main Container -->
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <ul>
+            <li class="active" onclick="showSection('announcements')">Announcements</li>
+            <li onclick="showSection('books')">Books</li>
+            <li onclick="showSection('borrowed-books')">Borrowed Books</li>
+            <li onclick="showSection('request-book')">Request a Book</li>
+
+            <li onclick="showSection('profile')">Profile</li>
+        </ul>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content">
+        <!-- Announcements Section -->
+        <div id="announcements" class="content-section active">
+            <h2>Announcements</h2>
+            <!-- Announcements List -->
+            <div id="announcements-list"></div>
+        </div>
+
+        <!-- Books Section -->
+        <div id="books" class="content-section">
+            <h2>Books</h2>
+            <table id="books-table">
+                <thead>
+                <tr>
+                    <th>
+                        Title
+                        <button onclick="sortBooks('title', 'asc')" class="sort-btn" data-column="title"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBooks('title', 'desc')" class="sort-btn" data-column="title"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Author
+                        <button onclick="sortBooks('author', 'asc')" class="sort-btn" data-column="author"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBooks('author', 'desc')" class="sort-btn" data-column="author"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Category
+                        <button onclick="sortBooks('category', 'asc')" class="sort-btn" data-column="category"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBooks('category', 'desc')" class="sort-btn" data-column="category"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Publication Year
+                        <button onclick="sortBooks('publication_year', 'asc')" class="sort-btn"
+                                data-column="publication_year" data-order="asc">↑
+                        </button>
+                        <button onclick="sortBooks('publication_year', 'desc')" class="sort-btn"
+                                data-column="publication_year" data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Available Copies
+                        <button onclick="sortBooks('available_copies', 'asc')" class="sort-btn"
+                                data-column="available_copies" data-order="asc">↑
+                        </button>
+                        <button onclick="sortBooks('available_copies', 'desc')" class="sort-btn"
+                                data-column="available_copies" data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>Borrow</th>
+                </tr>
+                </thead>
+                <tbody id="books-table-body"></tbody>
+            </table>
+            <div class="pagination" id="books-pagination">
+                <button onclick="changePage('books', -1)" disabled>Previous</button>
+                <span id="books-page-info">Page 1</span>
+                <button onclick="changePage('books', 1)">Next</button>
+            </div>
+        </div>
+
+        <!-- Borrowed Books Section -->
+        <div id="borrowed-books" class="content-section">
+            <h2>Borrowed Books</h2>
+            <!-- Status Filter Dropdown -->
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label for="status-filter" style="margin-right: 10px; color: #2c3e50; font-weight: bold;">Filter by
+                    Status:</label>
+                <select id="status-filter" onchange="filterBorrowedBooks()">
+                    <option value="all">All</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Passed Due">Passed Due</option>
+                    <option value="Returned">Returned</option>
+                </select>
+            </div>
+            <table id="borrowed-books-table">
+                <thead>
+                <tr>
+                    <th>
+                        Book ID
+                        <button onclick="sortBorrowedBooks('book_id', 'asc')" class="sort-btn" data-column="book_id"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBorrowedBooks('book_id', 'desc')" class="sort-btn" data-column="book_id"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Borrow Date
+                        <button onclick="sortBorrowedBooks('borrow_date', 'asc')" class="sort-btn"
+                                data-column="borrow_date" data-order="asc">↑
+                        </button>
+                        <button onclick="sortBorrowedBooks('borrow_date', 'desc')" class="sort-btn"
+                                data-column="borrow_date" data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Due Date
+                        <button onclick="sortBorrowedBooks('due_date', 'asc')" class="sort-btn" data-column="due_date"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBorrowedBooks('due_date', 'desc')" class="sort-btn" data-column="due_date"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                    <th>
+                        Status
+                        <button onclick="sortBorrowedBooks('status', 'asc')" class="sort-btn" data-column="status"
+                                data-order="asc">↑
+                        </button>
+                        <button onclick="sortBorrowedBooks('status', 'desc')" class="sort-btn" data-column="status"
+                                data-order="desc">↓
+                        </button>
+                    </th>
+                </tr>
+                </thead>
+                <tbody id="borrowed-books-table-body"></tbody>
+            </table>
+            <div class="pagination" id="borrowed-books-pagination">
+                <button onclick="changePage('borrowed-books', -1)" disabled>Previous</button>
+                <span id="borrowed-books-page-info">Page 1</span>
+                <button onclick="changePage('borrowed-books', 1)">Next</button>
+            </div>
+        </div>
+
+        <!-- Request Book Section -->
+        <div id="request-book" class="content-section">
+            <h2>Request a Book</h2>
+            <div class="form-container"
+                 style="background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 500px;">
+                <form id="request-book-form" onsubmit="requestBook(event)">
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div style="margin-bottom: 15px;">
+                        <label for="title"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Title:</label>
+                        <input type="text" id="title" name="title" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="author"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Author:</label>
+                        <input type="text" id="author" name="author" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div>
+                        <button type="submit"
+                                style="padding: 8px 12px; border: none; background-color: #3498db; color: white; cursor: pointer; border-radius: 3px; font-size: 16px;">
+                            Request Book
+                        </button>
+                    </div>
+                    <div id="request-message" style="margin-top: 10px; text-align: center;">
+                        <p th:text="${requestMessage}" style="color: blue;"></p>
+                        <p id="request-error" style="color: red; display: none;"></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="content-section">
+            <h2>Profile</h2>
+            <div class="profile-container" id="profile-view">
+                <div class="profile-row">
+                    <strong>Name:</strong>
+                    <span th:text="${user.name ?: 'N/A'}"></span>
+                </div>
+                <div class="profile-row">
+                    <strong>Username:</strong>
+                    <span th:text="${user.username ?: 'N/A'}"></span>
+                </div>
+                <div class="profile-row">
+                    <strong>Email:</strong>
+                    <span th:text="${user.email ?: 'N/A'}"></span>
+                </div>
+                <div class="profile-row">
+                    <strong>Date of Birth:</strong>
+                    <span th:text="${user.dob ?: 'N/A'}"></span>
+                </div>
+                <div class="profile-row">
+                    <strong>Address:</strong>
+                    <span th:text="${user.address ?: 'N/A'}"></span>
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="showEditProfileForm()"
+                            style="padding: 8px 12px; border: none; background-color: #3498db; color: white; cursor: pointer; border-radius: 3px;">
+                        Edit Profile
+                    </button>
+                </div>
+            </div>
+            <div class="profile-container" id="profile-edit" style="display: none;">
+                <form id="edit-profile-form" onsubmit="updateProfile(event)">
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div style="margin-bottom: 15px;">
+                        <label for="edit-name"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Name:</label>
+                        <input type="text" id="edit-name" name="name" th:value="${user.name ?: ''}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="edit-username"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Username:</label>
+                        <input type="text" id="edit-username" name="username" th:value="${user.username ?: ''}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="edit-email"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Email:</label>
+                        <input type="email" id="edit-email" name="email" th:value="${user.email ?: ''}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="edit-dob"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Date of
+                            Birth:</label>
+                        <input type="date" id="edit-dob" name="dob" th:value="${user.dob ?: ''}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="edit-address"
+                               style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: bold;">Address:</label>
+                        <input type="text" id="edit-address" name="address" th:value="${user.address ?: ''}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 16px;">
+                    </div>
+                    <div style="text-align: center;">
+                        <button type="submit"
+                                style="padding: 8px 12px; border: none; background-color: #3498db; color: white; cursor: pointer; border-radius: 3px; font-size: 16px;">
+                            Save Changes
+                        </button>
+                        <button type="button" onclick="cancelEditProfile()"
+                                style="padding: 8px 12px; border: none; background-color: #e74c3c; color: white; cursor: pointer; border-radius: 3px; font-size: 16px; margin-left: 10px;">
+                            Cancel
+                        </button>
+                    </div>
+                    <div id="profile-message" style="margin-top: 10px; text-align: center;">
+                        <p id="profile-success" style="color: blue;"></p>
+                        <p id="profile-error" style="color: red; display: none;"></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

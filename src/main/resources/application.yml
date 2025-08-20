@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: USER-SERVICE
+  datasource:
+    url: jdbc:sqlite:Spring-Library.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      naming:
+        physical-strategy=org:
+          hibernate:
+            boot:
+              model:
+                naming: PhysicalNamingStrategyStandardImp
+server:
+  port: 8081
