@@ -64,7 +64,6 @@ public class SecurityConfig {
         };
     }
 
-
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
         return credential -> {

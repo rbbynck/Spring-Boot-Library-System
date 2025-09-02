@@ -226,12 +226,11 @@ public class LibrarianService {
         // Retrieve penalty fine amount
 
         // User ID
-        List<LoanPenalty> loanPenalties = loanPenaltyRepository.findByUserID(user_id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Penalty Found"));
+        List<LoanPenalty> loanPenalties = loanPenaltyRepository.findByUserID(user_id).orElse(Collections.emptyList());
 
         // Check if user has penalties
-        if (loanPenalties.size() == 0) {
-            return null;
+        if (loanPenalties.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Penalty Found");
         }
 
         return loanPenalties.stream().mapToDouble(LoanPenalty::getFine).sum();
