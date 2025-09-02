@@ -30,6 +30,9 @@ public class BookService {
 
     @Transactional
     public void requestToBorrowBook(Long id, Authentication authentication) {
+        // Request to Borrow Book (Book will be moved into check-in table)
+        // Should update Check-In Table and Book Table
+
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No User Found"));
         Book book = bookRepository.findById(id)
@@ -67,11 +70,12 @@ public class BookService {
         check_in.setExpiry_date(String.valueOf(LocalDateTime.now().plusDays(2)));
         check_in.setUser_id(user.getId());
         bookCheckInRepository.save(check_in);
-        System.out.println("ID : " + id + "\nAUTHENTICATION: " + authentication.getName());
     }
 
     @Transactional
     public void requestABook(BookRequestDTO bookRequestDTO) {
+        // Request book save, check if book already exists in the books table or requested_books table
+
         List<Book> books = bookRepository.findAll();
 
         for (Book book : books) {
@@ -80,7 +84,7 @@ public class BookService {
         }
         String title = bookRequestDTO.getTitle();
         String author = bookRequestDTO.getAuthor();
-        System.out.println("DATABASE NOT");
+
         // Check if book exists
         System.out.println(bookRepository.findByTitleAndAuthor(title, author).isPresent());
         if (bookRepository.findByTitleAndAuthor(title, author).isPresent()) {

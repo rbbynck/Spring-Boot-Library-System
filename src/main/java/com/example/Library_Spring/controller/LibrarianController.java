@@ -5,8 +5,9 @@ import com.example.Library_Spring.model.Announcement;
 import com.example.Library_Spring.model.Book;
 import com.example.Library_Spring.model.BookCheckIn;
 import com.example.Library_Spring.model.Loans;
-import com.example.Library_Spring.repository.*;
-import com.example.Library_Spring.service.BookService;
+import com.example.Library_Spring.repository.AnnouncementRepository;
+import com.example.Library_Spring.repository.BookRepository;
+import com.example.Library_Spring.repository.LoansRepository;
 import com.example.Library_Spring.service.LibrarianService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +28,11 @@ public class LibrarianController {
     @Autowired
     private LoansRepository loansRepository;
     @Autowired
-    private BookCheckInRepository bookCheckInRepository;
-    @Autowired
-    private LoanPenaltyRepository loanPenaltyRepository;
-    @Autowired
     private LibrarianService librarianService;
-    @Autowired
-    private BookService bookService;
 
     @GetMapping("/announcements")
     public ResponseEntity<List<Announcement>> getAnnouncements() {
-        // Retrieve Announcements (Should be sorted from latest)
+        // Display Announcements (Should be sorted from latest)
         return ResponseEntity.ok(librarianService.getAnnouncements());
     }
 
@@ -66,7 +61,6 @@ public class LibrarianController {
     public ResponseEntity<Map<String, String>> updateAnnouncement(@RequestBody Announcement announcement, @PathVariable Long id) {
         // Edit announcement
         librarianService.editAnnouncement(announcement, id);
-
         Map<String, String> response = new HashMap<>();
         response.put("message", "Announcement Successfully Updated!");
         return ResponseEntity.ok(response);

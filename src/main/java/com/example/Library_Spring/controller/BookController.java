@@ -4,16 +4,19 @@ import com.example.Library_Spring.dto.BookRequestDTO;
 import com.example.Library_Spring.model.Book;
 import com.example.Library_Spring.model.Loans;
 import com.example.Library_Spring.model.User;
-import com.example.Library_Spring.repository.*;
+import com.example.Library_Spring.repository.BookRepository;
+import com.example.Library_Spring.repository.LoansRepository;
+import com.example.Library_Spring.repository.UserRepository;
 import com.example.Library_Spring.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/spring-library/book")
@@ -24,10 +27,6 @@ public class BookController {
     private LoansRepository loansRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private RequestedBooksRepository requestedBooksRepository;
-    @Autowired
-    private BookCheckInRepository bookCheckInRepository;
     @Autowired
     private BookService bookService;
 
@@ -40,9 +39,12 @@ public class BookController {
 
     @GetMapping("/borrowed-book")
     public ResponseEntity<List<Loans>> getLoans(Authentication authentication) {
-        Optional<User> user = userRepository.findByUsername(authentication.getName());
+        // Display borrowed books
+
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Data Found"));
         try {
-            List<Loans> loans = loansRepository.findByUser_ID(user.get().getId()).get();
+            List<Loans> loans = loansRepository.findByUser_ID(user.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Data Found"));
             System.out.println(loans);
             return ResponseEntity.ok(loans);
         } catch (Exception e) {
@@ -53,6 +55,7 @@ public class BookController {
     @PostMapping("/request-book")
     public ResponseEntity<Map<String, String>> requestBook(@RequestBody BookRequestDTO bookRequestDTO) {
         // POST REQUEST FOR REQUEST BOOK
+
         bookService.requestABook(bookRequestDTO);
         return ResponseEntity.ok(Map.of("message", "Book request submitted successfully!"));
     }

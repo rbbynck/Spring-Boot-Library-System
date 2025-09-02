@@ -29,6 +29,8 @@ public class LibrarianService {
 
     // ANNOUNCEMENT SERVICE
     public List<Announcement> getAnnouncements() {
+        // Retrieve all the announcements
+
         List<Announcement> announcements = announcementRepository.findAll();
         announcements = announcements.stream()
                 .collect(Collectors.collectingAndThen(
@@ -42,6 +44,8 @@ public class LibrarianService {
 
     @Transactional
     public void editAnnouncement(Announcement announcement, Long id) {
+        // Edit existing announcements
+
         Announcement announcementToEdit = announcementRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Penalty Found"));
         announcementToEdit.setTitle(announcement.getTitle());
@@ -51,6 +55,9 @@ public class LibrarianService {
 
     // BOOK SERVICE
     public void addBook(Book book) {
+        // Add or save new book
+
+        // Check if book already exists in the books table
         if (bookRepository.findByTitleAndAuthor(book.getTitle(), book.getAuthor()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Book already exists, if you're going to add another copy, please edit the existing book.");
         }
@@ -60,6 +67,8 @@ public class LibrarianService {
 
     @Transactional
     public void editBook(Book book, Long id) {
+        // Edit an existing book
+
         Book bookToEdit = bookRepository.findById(id).orElse(null);
         if (bookToEdit != null) {
             // Make sure the title and author changes first
@@ -83,6 +92,8 @@ public class LibrarianService {
 
     // CHECK-IN SERVICE
     public BookCheckIn getCheckInData(Long id) {
+        // Get Check-IN data from Check-In table
+
         // Check if book check in ID exists
         BookCheckIn bookCheckIn = bookCheckInRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-In data doesn't exists"));
@@ -109,6 +120,8 @@ public class LibrarianService {
 
     @Transactional
     public void saveCheckInData(Long id) {
+        // Transfer book from check-in to loan (successful check-in)
+
         BookCheckIn bookCheckIn = bookCheckInRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-In data doesn't exists"));
         bookCheckIn.setClaimed_date(String.valueOf(LocalDateTime.now()));
@@ -124,6 +137,8 @@ public class LibrarianService {
 
     // CHECK-OUT SERVICE
     public Loans getCheckOutData(Long id) {
+        // Retrieve check-out data (from loan table)
+
         Loans loans = loansRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-Out data doesn't exists"));
 
@@ -146,6 +161,8 @@ public class LibrarianService {
 
     @Transactional
     public String saveCheckOut(Long id) {
+        // Check-Out Saving, update loans table, book table. Check if the user has a pending penalty fine to pay
+
         // Update loans table
         Loans loans = loansRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-Out data doesn't exists"));
@@ -153,25 +170,23 @@ public class LibrarianService {
         loansRepository.save(loans);
 
         // Update book table (update the available copies)
-        Book book = bookRepository.findById(loans.getBook_id()).get();
+        Book book = bookRepository.findById(loans.getBook_id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Data Found"));
         book.setAvailable_copies(book.getAvailable_copies() + 1);
         bookRepository.save(book);
 
         // Check if user has a Penalty Fine to Pay
-        String message = "Book ID: " + book.getId() + " Successfully Checked-Out";
         Double penalty_fine = getPenaltyFine(loans.getUser_id());
         if (penalty_fine != null) {
-            message = "Please pay the penalty fine amount of " + penalty_fine + " to be able to borrow books again";
-        } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User have no penalty");
+            return "Please pay the penalty fine amount of " + penalty_fine + " to be able to borrow books again";
         }
-        return message;
+        return "Book ID: " + book.getId() + " Successfully Checked-Out";
     }
 
     // PENALTY SERVICE
     @Transactional
     public void addPenaltyFine(Long user_id, Long book_id) {
         // Add Penalty Fine for overdue Loans
+
         LoanPenalty loanPenalty = new LoanPenalty();
         loanPenalty.setFine(60);
         loanPenalty.setUser_id(user_id);
@@ -181,6 +196,8 @@ public class LibrarianService {
     }
 
     public void verifyPastDueDate(Loans loans) {
+        // Check if book that was loan past its due date (add penalty fine)
+
         LocalDateTime due_date = LocalDateTime.parse(loans.getDue_date());
         if (LocalDateTime.now().isAfter(due_date)) {
             // If penalty fine hasn't been created for this current loan
@@ -206,6 +223,8 @@ public class LibrarianService {
     }
 
     public Double getPenaltyFine(Long user_id) {
+        // Retrieve penalty fine amount
+
         // User ID
         List<LoanPenalty> loanPenalties = loanPenaltyRepository.findByUserID(user_id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Penalty Found"));
@@ -220,6 +239,8 @@ public class LibrarianService {
 
     @Transactional
     public void payPenaltyFine(PenaltyPayDTO penaltyPayDTO) {
+        // Pay penalty fine. Update penalty_fine table
+
         List<LoanPenalty> loanPenalties = loanPenaltyRepository.findByUserID(penaltyPayDTO.getUser_id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Penalty Found"));
 

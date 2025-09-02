@@ -24,6 +24,7 @@ public class AuthController {
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model, Authentication authentication) {
+        // If user is logged in, redirect them to home when they're accessing the login/register form
         if (authentication != null && authentication.isAuthenticated()) {
             return "redirect:/spring-library/home";
         }
@@ -33,7 +34,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public String registerUser(User user, Model model, @RequestParam("confirm-password") String confirmPassword) {
-        System.out.println(confirmPassword);
         // Check username if its already taken
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             model.addAttribute("error", "Username already exists");
@@ -57,6 +57,7 @@ public class AuthController {
             return "register";
         }
 
+        // Save User
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return "redirect:/login";
@@ -64,6 +65,7 @@ public class AuthController {
 
     @GetMapping("/login")
     public String showLogin(Authentication authentication) {
+        // If user is logged in, redirect them to home when they're accessing the login/register form
         if (authentication != null && authentication.isAuthenticated()) {
             boolean isAdmin = authentication.getAuthorities().stream()
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
@@ -79,6 +81,8 @@ public class AuthController {
 
     @GetMapping("/home")
     public String home(Authentication authentication, Model model) {
+        // Display home page
+
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElse(null);
         assert user != null;
@@ -86,9 +90,10 @@ public class AuthController {
         return "home";
     }
 
-
     @GetMapping("/librarian")
     public String librarian(Authentication authentication, Model model) {
+        // Display librarian page (FOR Librarian ONLY)
+
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElse(null);
         assert user != null;
@@ -98,6 +103,8 @@ public class AuthController {
 
     @GetMapping("/home/profile")
     public String viewProfile(Authentication authentication, Model model) {
+        // Display Profile data of user
+
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElse(null);
         assert user != null;

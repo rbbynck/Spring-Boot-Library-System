@@ -24,8 +24,10 @@ public class UserController {
 
     @PostMapping("/update")
     public ResponseEntity<Map<String, String>> updateProfile(@RequestBody UserProfileDTO userProfileDTO, Authentication authentication) {
+        // Update user profile
+
         Map<String, String> response = new HashMap<>();
-        User user = userRepository.findByUsername(authentication.getName()).get();
+        User user = userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No Data Found"));;
 
         try {
             // Update user details in the database

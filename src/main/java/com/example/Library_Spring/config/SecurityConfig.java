@@ -77,7 +77,7 @@ public class SecurityConfig {
                 throw new UsernameNotFoundException("User not found");
             }
 
-            // This one is for like session
+            // This one is like SESSION
             return org.springframework.security.core.userdetails.User
                     .withUsername(user.get().getUsername())
                     .password(user.get().getPassword())
